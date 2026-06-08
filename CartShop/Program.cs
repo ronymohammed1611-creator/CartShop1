@@ -11,6 +11,7 @@ using Microsoft.OpenApi.Models;
 using Stripe;
 using System.Text;
 using AppCheckoutService = CartShop.BLL.Services.CheckoutService;
+
 namespace CartShop
 {
     public class Program
@@ -19,22 +20,42 @@ namespace CartShop
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // ── Stripe Config ──
+            // ───────────────────────────────
+            // Stripe Config
+            // ───────────────────────────────
             StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 
-            // ── Database ──
+            // ───────────────────────────────
+            // Database (FIXED + Retry Policy)
+            // ───────────────────────────────
             builder.Services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(builder.Configuration
-                    .GetConnectionString("DefaultConnection")));
+                options.UseNpgsql(
+                    builder.Configuration.GetConnectionString("DefaultConnection"),
+                    npgsqlOptions =>
+                    {
+                        npgsqlOptions.EnableRetryOnFailure(
+                            maxRetryCount: 5,
+                            maxRetryDelay: TimeSpan.FromSeconds(10),
+                            errorCodesToAdd: null);
+                    }));
 
-            // ── Identity ──
-            builder.Services.AddIdentityCore<ApplicationUser>(options => { })
-                .AddRoles<IdentityRole>()
-                .AddEntityFrameworkStores<AppDbContext>()
-                .AddDefaultTokenProviders()
-                .AddSignInManager();
 
-            // ── JWT ──
+            // ───────────────────────────────
+            // Identity
+            // ───────────────────────────────
+            builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+            {
+                options.User.RequireUniqueEmail = true;
+                options.Password.RequiredLength = 6;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequireUppercase = false;
+            })
+            .AddEntityFrameworkStores<AppDbContext>()
+            .AddDefaultTokenProviders();
+
+            // ───────────────────────────────
+            // JWT Authentication
+            // ───────────────────────────────
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -56,14 +77,18 @@ namespace CartShop
                 };
             });
 
-            // ── Services ──
+            // ───────────────────────────────
+            // Services (DI)
+            // ───────────────────────────────
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<ICartService, CartService>();
             builder.Services.AddScoped<ICheckoutService, CartShop.BLL.Services.CheckoutService>();
             builder.Services.AddScoped<IOrderService, OrderService>();
 
-            // ── CORS ──
+            // ───────────────────────────────
+            // CORS
+            // ───────────────────────────────
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowAll", policy =>
@@ -74,10 +99,14 @@ namespace CartShop
                 });
             });
 
-            // ── Controllers ──
+            // ───────────────────────────────
+            // Controllers
+            // ───────────────────────────────
             builder.Services.AddControllers();
 
-            // ── Swagger ──
+            // ───────────────────────────────
+            // Swagger
+            // ───────────────────────────────
             builder.Services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo
@@ -86,15 +115,17 @@ namespace CartShop
                     Version = "v1",
                     Description = "API for SmartCart"
                 });
+
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
-                    Description = "JWT Authorization header: \"Bearer {token}\"",
+                    Description = "JWT Authorization header: Bearer {token}",
                     Name = "Authorization",
                     In = ParameterLocation.Header,
                     Type = SecuritySchemeType.Http,
                     Scheme = "Bearer",
                     BearerFormat = "JWT"
                 });
+
                 c.AddSecurityRequirement(new OpenApiSecurityRequirement
                 {
                     {
@@ -111,22 +142,24 @@ namespace CartShop
                 });
             });
 
-            // ────────────────────────────────
+            // ───────────────────────────────
+            // Build App
+            // ───────────────────────────────
+            builder.WebHost.UseUrls($"http://0.0.0.0:{Environment.GetEnvironmentVariable("PORT") ?? "8080"}");
             var app = builder.Build();
-            // ────────────────────────────────
 
-            // ── Middleware ──
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
-
-            //app.UseHttpsRedirection();
+            // ───────────────────────────────
+            // Middleware
+            // ───────────────────────────────
+            app.UseSwagger();
+            app.UseSwaggerUI();
             app.UseCors("AllowAll");
+
             app.UseAuthentication();
             app.UseAuthorization();
+
             app.MapControllers();
+
             app.Run();
         }
     }
