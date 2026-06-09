@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Stripe;
+using System;
 using System.Text;
 using AppCheckoutService = CartShop.BLL.Services.CheckoutService;
 
@@ -26,19 +27,18 @@ namespace CartShop
             StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 
             // ───────────────────────────────
-            // Database (FIXED + Retry Policy)
+            // Database (FIXED + STABLE)
             // ───────────────────────────────
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseNpgsql(
                     builder.Configuration.GetConnectionString("DefaultConnection"),
                     npgsqlOptions =>
                     {
-                        npgsqlOptions.EnableRetryOnFailure(
-                            maxRetryCount: 5,
-                            maxRetryDelay: TimeSpan.FromSeconds(10),
-                            errorCodesToAdd: null);
-                    }));
-
+                        npgsqlOptions.CommandTimeout(60);
+                        npgsqlOptions.EnableRetryOnFailure(3);
+                    }
+                )
+            );
 
             // ───────────────────────────────
             // Identity
@@ -83,7 +83,7 @@ namespace CartShop
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<ICartService, CartService>();
-            builder.Services.AddScoped<ICheckoutService, CartShop.BLL.Services.CheckoutService>();
+            builder.Services.AddScoped<ICheckoutService, AppCheckoutService>();
             builder.Services.AddScoped<IOrderService, OrderService>();
 
             // ───────────────────────────────
@@ -143,9 +143,12 @@ namespace CartShop
             });
 
             // ───────────────────────────────
-            // Build App
+            // Railway Port Binding
             // ───────────────────────────────
-            builder.WebHost.UseUrls($"http://0.0.0.0:{Environment.GetEnvironmentVariable("PORT") ?? "8080"}");
+            builder.WebHost.UseUrls(
+                $"http://0.0.0.0:{Environment.GetEnvironmentVariable("PORT") ?? "8080"}"
+            );
+
             var app = builder.Build();
 
             // ───────────────────────────────
@@ -153,6 +156,7 @@ namespace CartShop
             // ───────────────────────────────
             app.UseSwagger();
             app.UseSwaggerUI();
+
             app.UseCors("AllowAll");
 
             app.UseAuthentication();

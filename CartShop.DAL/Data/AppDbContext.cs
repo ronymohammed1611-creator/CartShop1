@@ -80,63 +80,21 @@ namespace CartShop.DAL.Data
                 .HasForeignKey(r => r.ProductId);
 
             // ── Decimal Precision ──
-            builder.Entity<Product>()
-                .Property(p => p.Price)
-                .HasPrecision(18, 2);
+            builder.Entity<Product>().Property(p => p.Price).HasPrecision(18, 2);
+            builder.Entity<Product>().Property(p => p.BaseUnitValue).HasPrecision(18, 2);
 
-            builder.Entity<Product>()
-                .Property(p => p.BaseUnitValue)
-                .HasPrecision(18, 2);
+            builder.Entity<CartItem>().Property(ci => ci.UnitPrice).HasPrecision(18, 2);
+            builder.Entity<CartItem>().Property(ci => ci.TotalPrice).HasPrecision(18, 2);
+            builder.Entity<CartItem>().Property(ci => ci.WeightInGrams).HasPrecision(18, 2);
 
-            builder.Entity<CartItem>()
-                .Property(ci => ci.UnitPrice)
-                .HasPrecision(18, 2);
+            builder.Entity<Order>().Property(o => o.TotalAmount).HasPrecision(18, 2);
+            builder.Entity<OrderItem>().Property(oi => oi.UnitPrice).HasPrecision(18, 2);
+            builder.Entity<OrderItem>().Property(oi => oi.TotalPrice).HasPrecision(18, 2);
 
-            builder.Entity<CartItem>()
-                .Property(ci => ci.TotalPrice)
-                .HasPrecision(18, 2);
+            builder.Entity<Offer>().Property(o => o.DiscountValue).HasPrecision(18, 2);
+            builder.Entity<Recommendation>().Property(r => r.Score).HasPrecision(18, 2);
 
-            builder.Entity<CartItem>()
-                .Property(ci => ci.WeightInGrams)
-                .HasPrecision(18, 2);
-
-            builder.Entity<Order>()
-                .Property(o => o.TotalAmount)
-                .HasPrecision(18, 2);
-
-            builder.Entity<OrderItem>()
-                .Property(oi => oi.UnitPrice)
-                .HasPrecision(18, 2);
-
-            builder.Entity<OrderItem>()
-                .Property(oi => oi.TotalPrice)
-                .HasPrecision(18, 2);
-
-            builder.Entity<Offer>()
-                .Property(o => o.DiscountValue)
-                .HasPrecision(18, 2);
-
-            builder.Entity<Recommendation>()
-                .Property(r => r.Score)
-                .HasPrecision(18, 2);
-
-            // ── Admin Seed ──
-            builder.Entity<ApplicationUser>().HasData(
-      new ApplicationUser
-      {
-          FullName = "Admin",          // ← ضيف السطر ده
-          Email = "Admin@gmail.com",
-          Id = "f8abc888",
-          UserName = "Admin User",
-          NormalizedEmail = "ADMIN@SITE.COM",
-          CreatedAt = new DateTime(2025, 09, 30, 0, 0, 0, DateTimeKind.Utc),
-          EmailConfirmed = true,
-          PasswordHash = "AQAAAAIAAYagAAAAEIjJh6/LXD2Bg+3MJGc+CmiaE471FJWBEmlTQ/1OhqkFw0NIgG/beU7wkTfmnuQ/sQ==",
-          SecurityStamp = "STATIC-SECURITY-STAMP-001",
-          ConcurrencyStamp = "STATIC-CONCURRENCY-STAMP-001",
-          LockoutEnabled = false
-      }
-  );
+            // ❌ IMPORTANT: removed HasData seed (سبب كل المشاكل)
         }
     }
 }
