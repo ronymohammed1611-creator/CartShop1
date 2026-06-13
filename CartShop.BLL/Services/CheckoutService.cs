@@ -1,7 +1,5 @@
 using CartShop.BLL.Dtos;
 using CartShop.BLL.Interfaces;
-using CartShop.DAL.Model.Enums;
-using CartShop.DAL.Repositories;
 using Microsoft.Extensions.Configuration;
 using Stripe.Checkout;
 using System;
@@ -12,59 +10,49 @@ namespace CartShop.BLL.Services
 {
     public class CheckoutService : ICheckoutService
     {
-        private readonly IUnitOfWork _unitOfWork;
         private readonly IConfiguration _configuration;
 
-        public CheckoutService(IUnitOfWork unitOfWork, IConfiguration configuration)
+        public CheckoutService(IConfiguration configuration)
         {
-            _unitOfWork = unitOfWork;
             _configuration = configuration;
         }
 
         // ── POST /api/checkout ──
-        public async Task<CheckoutResponseDto> CreateCheckoutSessionAsync(string userId)
+        public async Task<CheckoutResponseDto> CreateCheckoutSessionAsync(CheckoutRequest request)
         {
-            // 1. جيب الـ Cart
-            var cart = await _unitOfWork.Carts.GetCartWithItemsAsync(userId);
-
-            if (cart == null || cart.CartItems == null || cart.CartItems.Count == 0)
+            // 1. Validate request
+            if (request == null || request.Items == null || request.Items.Count == 0)
+            {
                 return new CheckoutResponseDto
                 {
                     Success = false,
-                    Message = "الـ Cart فاضي — مش ممكن تعمل checkout"
+                    Message = "Cart is empty"
                 };
+            }
 
-            // 2. بني الـ Line Items لـ Stripe
+            // 2. Build Stripe line items
             var lineItems = new List<SessionLineItemOptions>();
 
-            foreach (var item in cart.CartItems)
+            foreach (var item in request.Items)
             {
-                // Stripe بيشتغل بالـ cents (أو أقل وحدة) — ضرب في 100
-                var unitAmountInCents = (long)(item.UnitPrice * 100);
-
-                var productName = item.UnitType == UnitType.Weight
-                    ? $"{item.ProductName} ({item.WeightInGrams}g)"
-                    : item.ProductName;
+                var unitAmountInCents = (long)(item.Price * 100);
 
                 lineItems.Add(new SessionLineItemOptions
                 {
                     PriceData = new SessionLineItemPriceDataOptions
                     {
-                        Currency = "egp",                  // ← غيّرها لو محتاج
+                        Currency = "egp",
                         UnitAmount = unitAmountInCents,
                         ProductData = new SessionLineItemPriceDataProductDataOptions
                         {
-                            Name = productName,
-                            Images = item.ImageUrl != null
-                                ? new List<string> { item.ImageUrl }
-                                : null
+                            Name = item.Name
                         }
                     },
-                    Quantity = item.UnitType == UnitType.Weight ? 1 : item.Quantity
+                    Quantity = item.Quantity
                 });
             }
 
-            // 3. إنشئ الـ Session
+            // 3. Frontend URL
             var frontendUrl = _configuration["Frontend:BaseUrl"] ?? "http://localhost:3000";
 
             var options = new SessionCreateOptions
@@ -72,12 +60,13 @@ namespace CartShop.BLL.Services
                 PaymentMethodTypes = new List<string> { "card" },
                 LineItems = lineItems,
                 Mode = "payment",
+
                 SuccessUrl = $"{frontendUrl}/checkout/success?session_id={{CHECKOUT_SESSION_ID}}",
                 CancelUrl = $"{frontendUrl}/cart",
+
                 Metadata = new Dictionary<string, string>
                 {
-                    { "userId", userId },
-                    { "cartId", cart.Id.ToString() }
+                    { "source", "firebase_cart" }
                 }
             };
 
@@ -100,7 +89,7 @@ namespace CartShop.BLL.Services
             return new CheckoutResponseDto
             {
                 Success = true,
-                Message = "Checkout session created",
+                Message = "Checkout session created successfully",
                 SessionId = session.Id,
                 CheckoutUrl = session.Url
             };
@@ -118,10 +107,10 @@ namespace CartShop.BLL.Services
                 return new CheckoutStatusDto
                 {
                     Success = true,
-                    Message = "Status retrieved",
+                    Message = "Status retrieved successfully",
                     SessionId = session.Id,
-                    PaymentStatus = session.PaymentStatus,  // paid / unpaid
-                    SessionStatus = session.Status          // open / complete / expired
+                    PaymentStatus = session.PaymentStatus,
+                    SessionStatus = session.Status
                 };
             }
             catch (Exception ex)

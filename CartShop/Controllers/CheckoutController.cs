@@ -1,3 +1,4 @@
+using CartShop.BLL.Dtos;
 using CartShop.BLL.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,10 +9,7 @@ namespace CartShop.Controllers
 {
     [ApiController]
     [Route("api/checkout")]
-
-    // ⚠️ مؤقتًا هنشيل Authorize عشان نوقف redirect bug
-    // [Authorize]
-
+    [Authorize]
     public class CheckoutController : ControllerBase
     {
         private readonly ICheckoutService _checkoutService;
@@ -22,10 +20,11 @@ namespace CartShop.Controllers
         }
 
         [HttpPost]
-        [AllowAnonymous] // 👈 مهم جدًا
-        public async Task<IActionResult> CreateCheckout()
+        public async Task<IActionResult> CreateCheckout([FromBody] CheckoutRequest request)
         {
-            var result = await _checkoutService.CreateCheckoutSessionAsync(null);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var result = await _checkoutService.CreateCheckoutSessionAsync(userId, request);
 
             if (!result.Success)
                 return BadRequest(result);
@@ -34,7 +33,6 @@ namespace CartShop.Controllers
         }
 
         [HttpGet("status/{sessionId}")]
-        [AllowAnonymous]
         public async Task<IActionResult> GetCheckoutStatus(string sessionId)
         {
             var result = await _checkoutService.GetCheckoutStatusAsync(sessionId);
