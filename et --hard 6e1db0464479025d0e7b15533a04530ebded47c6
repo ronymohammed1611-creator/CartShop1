@@ -1,0 +1,101 @@
+[33mcommit ce6b4951964861cfe44fc028bea49ebe044d2a4f[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: Mariam-mahfouz <maryammahfouz2004@gmail.com>
+Date:   Sat Jun 13 05:31:12 2026 +0300
+
+    fix duplicate ICheckoutService
+
+[33mcommit 6e1db0464479025d0e7b15533a04530ebded47c6[m
+Author: Mariam-mahfouz <maryammahfouz2004@gmail.com>
+Date:   Sat Jun 13 05:28:48 2026 +0300
+
+    add ICheckoutServices dto
+
+[33mcommit a9e2868fb9ea953c4928c02d6669992d21d4cc5a[m
+Author: Mariam-mahfouz <maryammahfouz2004@gmail.com>
+Date:   Sat Jun 13 05:23:57 2026 +0300
+
+    add CheckoutRequest dto
+
+[33mcommit e7eb2ef726c111d24d331fbf4835a26a785fc5fe[m
+Author: Mariam-mahfouz <maryammahfouz2004@gmail.com>
+Date:   Sat Jun 13 05:06:53 2026 +0300
+
+    Fix checkout andcontrollers
+
+[33mcommit dc6ffadebab2e96edaad1c511bb13fa65279eb51[m
+Author: Mariam-mahfouz <maryammahfouz2004@gmail.com>
+Date:   Sat Jun 13 03:24:38 2026 +0300
+
+    Fix checkout auth redirect issue for Stripe
+
+[33mcommit 254be9632a4a322aff2da707b0d7589a2f9ffcee[m
+Author: Mariam-mahfouz <maryammahfouz2004@gmail.com>
+Date:   Tue Jun 9 13:29:37 2026 +0300
+
+    Json editiing
+
+[33mcommit 86bf291d9cd58ee8962eafdca7fbd129cee83116[m
+Author: Mariam-mahfouz <maryammahfouz2004@gmail.com>
+Date:   Tue Jun 9 13:14:25 2026 +0300
+
+    remove stripe secrets
+
+[33mcommit ddc1ad02a6e516762b2caf99b05eb92444929585[m
+Author: Mariam-mahfouz <maryammahfouz2004@gmail.com>
+Date:   Tue Jun 9 09:26:31 2026 +0300
+
+    fix railway connection string + production setup
+
+[33mcommit cbf328b50fd2be32861d28b1de8eac15d9e25e0c[m
+Author: Mariam-mahfouz <maryammahfouz2004@gmail.com>
+Date:   Tue Jun 9 09:13:32 2026 +0300
+
+    Fix DB connection timeout + update migrations + Railway deployment fix
+
+[33mcommit fb4a3cf869c5ea02f27d327758b739d56aee0e65[m
+Author: Mariam-mahfouz <maryammahfouz2004@gmail.com>
+Date:   Mon Jun 8 17:40:47 2026 +0300
+
+    Update API, fix Program.cs and migrations
+
+[33mcommit dd6dece6c97a91046eee7039e4bd8579e95a3588[m
+Author: Mariam-mahfouz <maryammahfouz2004@gmail.com>
+Date:   Mon Jun 8 11:34:59 2026 +0300
+
+    fix dockerfile
+
+[33mcommit ac67694451f2a43b0b768c14fa571b294fc61a7b[m
+Author: Mariam-mahfouz <maryammahfouz2004@gmail.com>
+Date:   Mon Jun 8 11:29:38 2026 +0300
+
+    add dockerfile
+
+[33mcommit 3aeee6df2729fe8c6b07d8eec26e008c4d8da88d[m
+Author: Rawan Mohamed <ronymohammed1611@gmail.com>
+Date:   Fri May 15 22:34:52 2026 +0300
+
+    file
+
+[33mcommit 0dd633bfe4b450d7242c1026a46294db5a9b4dfd[m
+Author: Rawan Mohamed <ronymohammed1611@gmail.com>
+Date:   Fri May 15 22:26:16 2026 +0300
+
+    updated this file
+
+[33mcommit 0d72d087ad86262f8584ebd4c2cb0a89df019bd6[m
+Author: Rawan Mohamed <ronymohammed1611@gmail.com>
+Date:   Fri May 15 21:33:46 2026 +0300
+
+    updated file
+
+[33mcommit c315760cf872dbc57598ca57a9fa7fd6fa3c138d[m
+Author: REVAN <REVAN@RAWAN>
+Date:   Fri May 15 17:32:21 2026 +0300
+
+    Add project files.
+
+[33mcommit fb7db996d9daf0987d35b843dce0140565742061[m
+Author: REVAN <REVAN@RAWAN>
+Date:   Fri May 15 17:32:18 2026 +0300
+
+    Add .gitattributes.
