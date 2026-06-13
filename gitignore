@@ -1,0 +1,37 @@
+# Build results
+bin/
+obj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# NuGet
+*.nupkg
+packages/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# ASP.NET
+wwwroot/lib/
+
+# Environment & Secrets
+appsettings.Development.json
+appsettings.Production.json
+*.pfx
+*.p12
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Entity Framework Migrations (اختياري - شيلها لو عاوز تبعت الـ Migrations)
+# Migrations/
