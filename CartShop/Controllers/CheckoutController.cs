@@ -24,6 +24,9 @@ namespace CartShop.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized(new { success = false, message = "User is not authenticated" });
+
             var result = await _checkoutService.CreateCheckoutSessionAsync(userId, request);
 
             if (!result.Success)

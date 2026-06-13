@@ -24,7 +24,10 @@ namespace CartShop
             // =========================
             // STRIPE
             // =========================
-            StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
+            StripeConfiguration.ApiKey =
+                builder.Configuration["Stripe:SecretKey"]
+                ?? Environment.GetEnvironmentVariable("STRIPE_SECRET_KEY")
+                ?? Environment.GetEnvironmentVariable("Stripe__SecretKey");
 
             // =========================
             // CONNECTION STRING (RAILWAY SAFE)

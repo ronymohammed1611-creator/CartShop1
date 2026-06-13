@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Stripe.Checkout;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace CartShop.BLL.Services
@@ -17,11 +18,18 @@ namespace CartShop.BLL.Services
             _configuration = configuration;
         }
 
-        // ── POST /api/checkout ──
-        public async Task<CheckoutResponseDto> CreateCheckoutSessionAsync(CheckoutRequest request)
+        public async Task<CheckoutResponseDto> CreateCheckoutSessionAsync(string userId, CheckoutRequest request)
         {
-            // 1. Validate request
-            if (request == null || request.Items == null || request.Items.Count == 0)
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return new CheckoutResponseDto
+                {
+                    Success = false,
+                    Message = "User is not authenticated"
+                };
+            }
+
+            if (request?.Items == null || request.Items.Count == 0)
             {
                 return new CheckoutResponseDto
                 {
@@ -30,12 +38,15 @@ namespace CartShop.BLL.Services
                 };
             }
 
-            // 2. Build Stripe line items
             var lineItems = new List<SessionLineItemOptions>();
 
             foreach (var item in request.Items)
             {
-                var unitAmountInCents = (long)(item.Price * 100);
+                if (string.IsNullOrWhiteSpace(item.Name) || item.Price <= 0)
+                    continue;
+
+                var quantity = item.Quantity > 0 ? item.Quantity : 1;
+                var unitAmountInCents = (long)Math.Round(item.Price * 100, MidpointRounding.AwayFromZero);
 
                 lineItems.Add(new SessionLineItemOptions
                 {
@@ -48,34 +59,51 @@ namespace CartShop.BLL.Services
                             Name = item.Name
                         }
                     },
-                    Quantity = item.Quantity
+                    Quantity = quantity
                 });
             }
 
-            // 3. Frontend URL
-            var frontendUrl = _configuration["Frontend:BaseUrl"] ?? "http://localhost:3000";
+            if (lineItems.Count == 0)
+            {
+                return new CheckoutResponseDto
+                {
+                    Success = false,
+                    Message = "No valid cart items to checkout"
+                };
+            }
+
+            var frontendUrl =
+                _configuration["Stripe:Frontend:BaseUrl"]
+                ?? _configuration["Frontend:BaseUrl"]
+                ?? "http://localhost:5173";
 
             var options = new SessionCreateOptions
             {
                 PaymentMethodTypes = new List<string> { "card" },
                 LineItems = lineItems,
                 Mode = "payment",
-
-                SuccessUrl = $"{frontendUrl}/checkout/success?session_id={{CHECKOUT_SESSION_ID}}",
-                CancelUrl = $"{frontendUrl}/cart",
-
+                SuccessUrl = $"{frontendUrl.TrimEnd('/')}/success?session_id={{CHECKOUT_SESSION_ID}}",
+                CancelUrl = $"{frontendUrl.TrimEnd('/')}/payment",
                 Metadata = new Dictionary<string, string>
                 {
+                    { "userId", userId },
                     { "source", "firebase_cart" }
                 }
             };
 
             var service = new SessionService();
-            Session session;
 
             try
             {
-                session = await service.CreateAsync(options);
+                var session = await service.CreateAsync(options);
+
+                return new CheckoutResponseDto
+                {
+                    Success = true,
+                    Message = "Checkout session created successfully",
+                    SessionId = session.Id,
+                    CheckoutUrl = session.Url
+                };
             }
             catch (Exception ex)
             {
@@ -85,17 +113,8 @@ namespace CartShop.BLL.Services
                     Message = $"Stripe error: {ex.Message}"
                 };
             }
-
-            return new CheckoutResponseDto
-            {
-                Success = true,
-                Message = "Checkout session created successfully",
-                SessionId = session.Id,
-                CheckoutUrl = session.Url
-            };
         }
 
-        // ── GET /api/checkout/status/:sessionId ──
         public async Task<CheckoutStatusDto> GetCheckoutStatusAsync(string sessionId)
         {
             var service = new SessionService();

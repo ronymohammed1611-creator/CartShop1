@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Stripe;
 using Stripe.Checkout;
+using System;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -30,7 +31,10 @@ namespace CartShop.Controllers
         public async Task<IActionResult> StripeWebhook()
         {
             var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
-            var webhookSecret = _configuration["Stripe:WebhookSecret"];
+            var webhookSecret =
+                _configuration["Stripe:WebhookSecret"]
+                ?? Environment.GetEnvironmentVariable("STRIPE_WEBHOOK_SECRET")
+                ?? Environment.GetEnvironmentVariable("Stripe__WebhookSecret");
 
             Event stripeEvent;
 
