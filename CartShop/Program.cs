@@ -30,7 +30,7 @@ namespace CartShop
                 ?? Environment.GetEnvironmentVariable("Stripe__SecretKey");
 
             // =========================
-            // CONNECTION STRING (RAILWAY SAFE)
+            // CONNECTION STRING
             // =========================
             var connectionString =
                 builder.Configuration.GetConnectionString("DefaultConnection")
@@ -38,9 +38,7 @@ namespace CartShop
                 ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
 
             if (string.IsNullOrWhiteSpace(connectionString))
-            {
                 throw new Exception("Database connection string is missing!");
-            }
 
             builder.Services.AddDbContext<AppDbContext>(options =>
             {
@@ -65,9 +63,14 @@ namespace CartShop
             .AddDefaultTokenProviders();
 
             // =========================
-            // JWT AUTH
+            // JWT AUTH (FIXED)
             // =========================
-            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
             .AddJwtBearer(options =>
             {
                 options.TokenValidationParameters = new TokenValidationParameters
@@ -82,24 +85,35 @@ namespace CartShop
                         Encoding.UTF8.GetBytes(builder.Configuration["JWT:Secret"])
                     )
                 };
+
+                // مهم جدًا: منع التحويل لـ /Account/Login
+                options.Events = new JwtBearerEvents
+                {
+                    OnChallenge = context =>
+                    {
+                        context.HandleResponse();
+                        context.Response.StatusCode = 401;
+                        context.Response.ContentType = "application/json";
+                        return context.Response.WriteAsync("{\"message\":\"Unauthorized\"}");
+                    }
+                };
             });
 
             // =========================
-            // CORS (FRONTEND SAFE)
+            // CORS
             // =========================
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowFrontend", policy =>
                 {
-                    policy
-                        .AllowAnyHeader()
-                        .AllowAnyMethod()
-                        .AllowAnyOrigin();
+                    policy.AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowAnyOrigin();
                 });
             });
 
             // =========================
-            // DI SERVICES
+            // DI
             // =========================
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped<IAuthService, AuthService>();
@@ -129,7 +143,7 @@ namespace CartShop
             });
 
             // =========================
-            // RAILWAY PORT
+            // PORT
             // =========================
             var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
             builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
@@ -137,7 +151,7 @@ namespace CartShop
             var app = builder.Build();
 
             // =========================
-            // MIDDLEWARE ORDER
+            // PIPELINE
             // =========================
             app.UseSwagger();
             app.UseSwaggerUI();
