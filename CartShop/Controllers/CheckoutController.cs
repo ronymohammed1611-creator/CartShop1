@@ -2,12 +2,16 @@ using CartShop.BLL.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace CartShop.Controllers
 {
     [ApiController]
     [Route("api/checkout")]
-    [Authorize]
+
+    // ⚠️ مؤقتًا هنشيل Authorize عشان نوقف redirect bug
+    // [Authorize]
+
     public class CheckoutController : ControllerBase
     {
         private readonly ICheckoutService _checkoutService;
@@ -17,15 +21,11 @@ namespace CartShop.Controllers
             _checkoutService = checkoutService;
         }
 
-        /// <summary>
-        /// ينشئ Stripe Checkout Session من الـ Cart الحالي
-        /// يرجع CheckoutUrl — الـ Frontend يوجّه اليوزر إليها
-        /// </summary>
         [HttpPost]
+        [AllowAnonymous] // 👈 مهم جدًا
         public async Task<IActionResult> CreateCheckout()
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var result = await _checkoutService.CreateCheckoutSessionAsync(userId);
+            var result = await _checkoutService.CreateCheckoutSessionAsync(null);
 
             if (!result.Success)
                 return BadRequest(result);
@@ -33,10 +33,8 @@ namespace CartShop.Controllers
             return Ok(result);
         }
 
-        /// <summary>
-        /// يتحقق من حالة الـ payment بعد الـ redirect من Stripe
-        /// </summary>
         [HttpGet("status/{sessionId}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetCheckoutStatus(string sessionId)
         {
             var result = await _checkoutService.GetCheckoutStatusAsync(sessionId);
